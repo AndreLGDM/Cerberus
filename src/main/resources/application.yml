@@ -1,0 +1,39 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: cerberus
+
+# Configuração da política de senhas usada pelo endpoint /api/v1/password/policy
+# e pela auditoria completa. Todos os valores podem ser sobrescritos por
+# variáveis de ambiente, ex.: CERBERUS_POLICY_MIN_LENGTH=16
+cerberus:
+  policy:
+    min-length: 12
+    require-uppercase: true
+    require-lowercase: true
+    require-digit: true
+    require-symbol: true
+    forbid-common: true
+    forbid-breached: true
+  breach:
+    # Endpoint público da API Pwned Passwords (modelo k-anonymity).
+    base-url: https://api.pwnedpasswords.com
+    # Tempo máximo de espera pela resposta da API externa.
+    timeout-ms: 4000
+
+# Documentação OpenAPI / Swagger UI
+springdoc:
+  swagger-ui:
+    path: /docs
+
+# Expõe apenas o endpoint de health do Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
