@@ -15,59 +15,73 @@ https://github.com/AndreLGDM/Cerberus
 - Desenvolvimento do codigo: Claude (Anthropic), por meio da ferramenta
   Claude Code (agente de programacao em terminal).
 - Geracao do README.md: Claude (Anthropic) / Claude Code.
-- Revisao critica do artefato: Claude (Anthropic) / Claude Code.
+- Revisao critica do artefato: conduzida pelo aluno, avaliando o resultado
+  contra os quatro criterios (disponibilidade, funcionalidade,
+  sustentabilidade e reprodutibilidade).
+- Refatoracao e correcoes: Claude (Anthropic) / Claude Code, implementando
+  as correcoes e melhorias apontadas pelo aluno na revisao.
 
-Em todas as etapas o mesmo assistente foi utilizado, mas com papeis distintos:
-gerador de codigo, redator de documentacao e revisor critico. A conducao do
-processo (definicao do tema, escolhas tecnicas, validacao e aceite) foi do aluno.
+A IA atuou como ferramenta de geracao (codigo e documentacao) e de execucao
+das correcoes; a conducao do processo — definicao do tema, escolhas tecnicas,
+revisao critica, validacao e aceite final — foi do aluno.
 
 ------------------------------------------------------------------------
 3. EXEMPLOS DOS PRINCIPAIS PROMPTS UTILIZADOS
 ------------------------------------------------------------------------
 
 3.1. Prompt inicial (definicao e enquadramento)
-   "Preciso desenvolver um artefato de software que resolva um problema real
-    de ciberseguranca, publicado no GitHub, avaliado por 4 criterios:
-    disponibilidade, funcionalidade, sustentabilidade e reprodutibilidade.
-    A ideia e voce criar o conteudo e deixar estruturado; eu crio o
-    repositorio e voce commita."
-   RESULTADO: bom. A IA fez perguntas de escopo (tema e linguagem) em vez de
-   sair gerando codigo, o que ajudou a delimitar o problema.
+   "Atue como engenheiro de software senior. Vou desenvolver um artefato de
+    ciberseguranca que sera publicado em repositorio publico e avaliado segundo
+    quatro criterios: disponibilidade, funcionalidade, sustentabilidade e
+    reprodutibilidade. Antes de gerar qualquer codigo, levante as questoes
+    necessarias para delimitar o escopo (problema a resolver, formato do
+    artefato e stack tecnologica)."
+   RESULTADO: bom. A IA levantou as questoes de escopo em vez de gerar codigo
+   prematuramente, o que ajudou a delimitar o problema antes da implementacao.
 
-3.2. Prompt de decisao de escopo
-   Tema escolhido: "Auditoria de senhas / cripto".
-   Linguagem: "nada a ver fazer com java e spring boot?"
-   RESULTADO: bom. A IA confirmou que Java + Spring Boot enquadra o artefato
-   como "servico" (formato aceito) e propos um desenho concreto com 3 frentes
-   (forca, vazamento via k-anonymity, hashing BCrypt).
+3.2. Prompt de definicao de escopo e stack
+   "O tema sera auditoria de seguranca de senhas (criptografia aplicada). A
+    stack definida e Java 21 com Spring Boot, expondo o artefato como um
+    servico REST. Proponha um desenho de solucao com tres capacidades:
+    (1) analise de forca de senha, (2) verificacao de vazamento preservando a
+    privacidade e (3) hashing seguro para armazenamento."
+   RESULTADO: bom. Com a stack ja decidida pelo aluno, a IA detalhou uma
+   arquitetura em camadas e propos o uso de k-anonymity (HaveIBeenPwned) para a
+   verificacao de vazamento e de BCrypt para o hashing.
 
-3.3. Prompts de refinamento (exemplos do que foi pedido durante a construcao)
-   - "A verificacao de vazamento nao pode enviar a senha para fora; use o
-      modelo k-anonymity do HaveIBeenPwned (so o prefixo do hash)."
-   - "Isole a chamada HTTP atras de uma interface para dar para testar sem rede."
-   - "Se a API de vazamento cair, o servico deve degradar graciosamente, nao
-      retornar erro."
-   - "Adicione testes unitarios e de integracao (MockMvc) e rode de verdade."
-   RESULTADO: bom. Esses refinamentos vieram de analise das respostas e
-   levaram a decisoes de arquitetura melhores (testabilidade e privacidade).
+3.3. Prompts de refinamento tecnico (durante a construcao)
+   - "A verificacao de vazamento nao deve transmitir a senha para o servico
+      externo. Implemente o modelo k-anonymity do HaveIBeenPwned, enviando
+      apenas o prefixo de 5 caracteres do hash SHA-1."
+   - "Isole a chamada HTTP externa atras de uma interface, de modo que a logica
+      de negocio possa ser testada sem dependencia de rede."
+   - "Trate a indisponibilidade da API externa com degradacao graciosa: o
+      servico deve responder um estado 'nao verificado' em vez de retornar erro."
+   - "Inclua testes unitarios e de integracao (MockMvc) e execute a suite para
+      comprovar o funcionamento."
+   RESULTADO: bom. Os refinamentos, derivados da analise critica das respostas,
+   conduziram a decisoes de arquitetura melhores (testabilidade e privacidade).
 
-3.4. Exemplo de prompt/abordagem que produziu resultado INADEQUADO
-   Abordagem "peca tudo de uma vez" (gerar o projeto inteiro em um unico passo)
-   levou a dois defeitos que so apareceram ao COMPILAR/TESTAR:
+3.4. Exemplo de prompt que produziu resultado INADEQUADO
+   Prompt: "Gere o projeto completo do artefato de uma unica vez, com todo o
+    codigo-fonte, testes e documentacao."
+   RESULTADO: inadequado. A geracao em bloco unico introduziu dois defeitos que
+   so se manifestaram ao COMPILAR/TESTAR:
    (a) o metodo utilitario sha1Hex ficou com visibilidade de pacote e o teste
        de integracao (em outro pacote) nao compilava;
-   (b) um teste checava a substring "comum" numa mensagem que dizia "comuns",
-       falhando a asercao.
+   (b) um teste verificava a substring "comum" numa mensagem que continha
+       "comuns", falhando a asercao.
    LICAO: aceitar codigo sem compilar/testar mascara erros. A correcao exigiu
-   rodar "mvn test", ler a falha e corrigir (tornar o metodo publico e ajustar
-   a asercao). Isso reforca a exigencia de validacao pelo aluno.
+   executar a suite, ler a falha e corrigir (ajustar a visibilidade do metodo e
+   a asercao). Reforca a necessidade de validacao ativa pelo aluno.
 
 3.5. Exemplo de refinamento de prompt (evolucao)
-   Prompt fraco: "gere os testes".
-   Refinado: "gere testes que provem a garantia de k-anonymity (verificar que
-   apenas 5 caracteres do hash sao enviados), que validem o SHA-1 contra um
-   vetor conhecido e que nao dependam de rede (cliente mockado)."
-   RESULTADO: o prompt refinado produziu testes com valor de seguranca real,
+   Prompt inicial (vago): "Gere os testes."
+   Prompt refinado: "Gere testes que comprovem a garantia de k-anonymity
+    (verificando que apenas 5 caracteres do hash sao enviados), validem o SHA-1
+    contra um vetor de teste conhecido e nao dependam de rede (cliente externo
+    substituido por mock)."
+   RESULTADO: o prompt refinado produziu testes com valor de seguranca real, e
    nao apenas cobertura superficial.
 
 ------------------------------------------------------------------------
@@ -90,12 +104,13 @@ processo (definicao do tema, escolhas tecnicas, validacao e aceite) foi do aluno
   tempo disponivel, e registrando essas escolhas como limitacoes conhecidas.
 
 ------------------------------------------------------------------------
-5. RESUMO DA REVISAO REALIZADA PELA IA
+5. RESUMO DA REVISAO CRITICA E DAS CORRECOES
 ------------------------------------------------------------------------
-Apos a implementacao, o artefato foi submetido a uma revisao critica pela IA
-considerando os quatro criterios de avaliacao.
+Apos a implementacao, o aluno conduziu uma revisao critica do artefato
+considerando os quatro criterios de avaliacao. As correcoes e melhorias
+resultantes foram entao implementadas com auxilio da IA (Claude).
 
-Principais PROBLEMAS/OPORTUNIDADES identificados:
+Principais PROBLEMAS/OPORTUNIDADES identificados na revisao:
   P1 (Reprodutibilidade) O README exigia Maven instalado; quem so tem o JDK
      nao conseguiria buildar de forma identica.
   P2 (Sustentabilidade) Ausencia de integracao continua para provar, em
