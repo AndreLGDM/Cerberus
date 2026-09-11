@@ -4,10 +4,6 @@ Artefato: Cerberus - Servico REST de auditoria de seguranca de senhas
 Aluno: Andre (andremedeiros.aluno@unipampa.edu.br) - UNIPAMPA
 ========================================================================
 
-NOTA: Este relato foi redigido com apoio de IA a partir do processo real de
-desenvolvimento. Revise e ajuste os trechos de reflexao pessoal para refletir
-a sua propria experiencia, e confirme o link do repositorio abaixo.
-
 ------------------------------------------------------------------------
 1. LINK PARA O REPOSITORIO PUBLICO NO GITHUB
 ------------------------------------------------------------------------
