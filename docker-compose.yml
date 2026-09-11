@@ -1,0 +1,12 @@
+services:
+  cerberus:
+    build: .
+    image: cerberus:1.0.0
+    container_name: cerberus
+    ports:
+      - "8080:8080"
+    environment:
+      # Exemplo de endurecimento da política via variáveis de ambiente.
+      CERBERUS_POLICY_MIN_LENGTH: "14"
+      CERBERUS_POLICY_REQUIRE_SYMBOL: "true"
+    restart: unless-stopped

@@ -1,0 +1,178 @@
+========================================================================
+RELATO DO PROCESSO DE DESENVOLVIMENTO ASSISTIDO POR IA
+Artefato: Cerberus - Servico REST de auditoria de seguranca de senhas
+Aluno: Andre (andremedeiros.aluno@unipampa.edu.br) - UNIPAMPA
+========================================================================
+
+NOTA: Este relato foi redigido com apoio de IA a partir do processo real de
+desenvolvimento. Revise e ajuste os trechos de reflexao pessoal para refletir
+a sua propria experiencia, e confirme o link do repositorio abaixo.
+
+------------------------------------------------------------------------
+1. LINK PARA O REPOSITORIO PUBLICO NO GITHUB
+------------------------------------------------------------------------
+https://github.com/AndreLGDM/Cerberus
+
+------------------------------------------------------------------------
+2. MODELOS DE IA UTILIZADOS EM CADA ETAPA
+------------------------------------------------------------------------
+- Desenvolvimento do codigo: Claude (Anthropic), por meio da ferramenta
+  Claude Code (agente de programacao em terminal).
+- Geracao do README.md: Claude (Anthropic) / Claude Code.
+- Revisao critica do artefato: Claude (Anthropic) / Claude Code.
+
+Em todas as etapas o mesmo assistente foi utilizado, mas com papeis distintos:
+gerador de codigo, redator de documentacao e revisor critico. A conducao do
+processo (definicao do tema, escolhas tecnicas, validacao e aceite) foi do aluno.
+
+------------------------------------------------------------------------
+3. EXEMPLOS DOS PRINCIPAIS PROMPTS UTILIZADOS
+------------------------------------------------------------------------
+
+3.1. Prompt inicial (definicao e enquadramento)
+   "Preciso desenvolver um artefato de software que resolva um problema real
+    de ciberseguranca, publicado no GitHub, avaliado por 4 criterios:
+    disponibilidade, funcionalidade, sustentabilidade e reprodutibilidade.
+    A ideia e voce criar o conteudo e deixar estruturado; eu crio o
+    repositorio e voce commita."
+   RESULTADO: bom. A IA fez perguntas de escopo (tema e linguagem) em vez de
+   sair gerando codigo, o que ajudou a delimitar o problema.
+
+3.2. Prompt de decisao de escopo
+   Tema escolhido: "Auditoria de senhas / cripto".
+   Linguagem: "nada a ver fazer com java e spring boot?"
+   RESULTADO: bom. A IA confirmou que Java + Spring Boot enquadra o artefato
+   como "servico" (formato aceito) e propos um desenho concreto com 3 frentes
+   (forca, vazamento via k-anonymity, hashing BCrypt).
+
+3.3. Prompts de refinamento (exemplos do que foi pedido durante a construcao)
+   - "A verificacao de vazamento nao pode enviar a senha para fora; use o
+      modelo k-anonymity do HaveIBeenPwned (so o prefixo do hash)."
+   - "Isole a chamada HTTP atras de uma interface para dar para testar sem rede."
+   - "Se a API de vazamento cair, o servico deve degradar graciosamente, nao
+      retornar erro."
+   - "Adicione testes unitarios e de integracao (MockMvc) e rode de verdade."
+   RESULTADO: bom. Esses refinamentos vieram de analise das respostas e
+   levaram a decisoes de arquitetura melhores (testabilidade e privacidade).
+
+3.4. Exemplo de prompt/abordagem que produziu resultado INADEQUADO
+   Abordagem "peca tudo de uma vez" (gerar o projeto inteiro em um unico passo)
+   levou a dois defeitos que so apareceram ao COMPILAR/TESTAR:
+   (a) o metodo utilitario sha1Hex ficou com visibilidade de pacote e o teste
+       de integracao (em outro pacote) nao compilava;
+   (b) um teste checava a substring "comum" numa mensagem que dizia "comuns",
+       falhando a asercao.
+   LICAO: aceitar codigo sem compilar/testar mascara erros. A correcao exigiu
+   rodar "mvn test", ler a falha e corrigir (tornar o metodo publico e ajustar
+   a asercao). Isso reforca a exigencia de validacao pelo aluno.
+
+3.5. Exemplo de refinamento de prompt (evolucao)
+   Prompt fraco: "gere os testes".
+   Refinado: "gere testes que provem a garantia de k-anonymity (verificar que
+   apenas 5 caracteres do hash sao enviados), que validem o SHA-1 contra um
+   vetor conhecido e que nao dependam de rede (cliente mockado)."
+   RESULTADO: o prompt refinado produziu testes com valor de seguranca real,
+   nao apenas cobertura superficial.
+
+------------------------------------------------------------------------
+4. DECISOES TOMADAS PELO ALUNO QUE A IA NAO RESOLVEU ADEQUADAMENTE
+------------------------------------------------------------------------
+- Escolha do tema e do problema concreto: decisao do aluno (auditoria de
+  senhas), assim como a escolha da stack (Java/Spring Boot). A IA apenas
+  ofereceu opcoes; a responsabilidade pela direcao foi do aluno.
+- Tratamento da API externa bloqueada no ambiente: durante o desenvolvimento,
+  o dominio api.pwnedpasswords.com estava BLOQUEADO pela politica de rede do
+  ambiente (egresso negado). A IA, sozinha, poderia ter concluido que "a
+  funcionalidade nao funciona". O aluno decidiu: (1) manter a degradacao
+  graciosa como comportamento correto, (2) provar a logica de vazamento por
+  meio de teste com cliente mockado (formato real de resposta do HIBP) e
+  (3) documentar explicitamente essa limitacao de AMBIENTE (nao do artefato)
+  no README. Essa distincao entre "bug do artefato" e "restricao do ambiente"
+  foi um julgamento humano.
+- Nivel de escopo: decisao do aluno de nao incluir Argon2/scrypt,
+  autenticacao e rate limiting, mantendo o artefato enxuto e avaliavel no
+  tempo disponivel, e registrando essas escolhas como limitacoes conhecidas.
+
+------------------------------------------------------------------------
+5. RESUMO DA REVISAO REALIZADA PELA IA
+------------------------------------------------------------------------
+Apos a implementacao, o artefato foi submetido a uma revisao critica pela IA
+considerando os quatro criterios de avaliacao.
+
+Principais PROBLEMAS/OPORTUNIDADES identificados:
+  P1 (Reprodutibilidade) O README exigia Maven instalado; quem so tem o JDK
+     nao conseguiria buildar de forma identica.
+  P2 (Sustentabilidade) Ausencia de integracao continua para provar, em
+     ambiente limpo, que o build e os testes passam.
+  P3 (Reprodutibilidade) Build Docker poderia incluir arquivos desnecessarios
+     no contexto, deixando-o menos determinístico.
+  P4 (Funcionalidade) A verificacao de vazamento nao pode ser exercitada neste
+     ambiente por bloqueio de rede - risco de parecer "quebrada".
+
+SUGESTOES apresentadas e ACOES realizadas:
+  P1 -> Adicionado o Maven Wrapper (mvnw / mvnw.cmd / .mvn). Agora basta o JDK
+        21; o Maven correto e baixado automaticamente. README atualizado para
+        usar ./mvnw. VALIDADO: "./mvnw -version" e "./mvnw clean verify" rodam.
+  P2 -> Adicionado workflow de CI (.github/workflows/ci.yml) que executa
+        "./mvnw clean verify" em JDK 21 a cada push/PR.
+  P3 -> Adicionado .dockerignore para reduzir e estabilizar o contexto de build.
+  P4 -> Mantida a degradacao graciosa (checked=false), garantida a cobertura da
+        logica por teste mockado e documentada a limitacao de ambiente no README
+        (secao "Limitacoes conhecidas"), separando artefato de ambiente.
+
+Correcoes adicionais surgidas da propria validacao (nao apenas da revisao):
+  - Visibilidade do metodo sha1Hex ajustada (erro de compilacao real).
+  - Asercao de teste corrigida ("comum" -> "comuns").
+Resultado final da revisao: 23 testes passando, BUILD SUCCESS, endpoints
+validados manualmente via curl (strength, hash, verify, policy) e a
+degradacao graciosa confirmada em execucao real.
+
+------------------------------------------------------------------------
+6. REFLEXAO CRITICA SOBRE O PROCESSO
+------------------------------------------------------------------------
+O que a IA ACELEROU:
+  - Estruturacao inicial do projeto Spring Boot (pom, camadas, DTOs, config).
+  - Escrita de codigo repetitivo (controllers, records, tratamento de erros)
+    e da documentacao (README extenso e coerente) em pouco tempo.
+  - Geracao de casos de teste a partir de requisitos descritos em linguagem
+    natural.
+
+O que a IA FEZ BEM:
+  - Aplicou boas praticas de seguranca quando direcionada (k-anonymity para
+    nao vazar a senha, BCrypt com salt e work factor, usuario nao-root no
+    container, senha nunca logada).
+  - Isolou dependencias externas atras de interface, facilitando teste.
+  - Produziu documentacao clara e mapeada aos 4 criterios de avaliacao.
+
+LIMITACOES ENCONTRADAS / ERROS GERADOS PELA IA:
+  - Codigo "parece" correto mas nao compila/passa nos testes ate ser executado
+    (dois defeitos reais so apareceram ao rodar o build).
+  - Tendencia a otimismo: sem validacao explicita, a IA poderia declarar
+    funcionalidades como prontas sem prova.
+  - Nao tem contexto do ambiente (o bloqueio de rede so foi entendido apos
+    executar e inspecionar os logs/proxy).
+
+SITUACOES QUE EXIGIRAM INTERVENCAO HUMANA:
+  - Definicao do problema, do escopo e da stack.
+  - Interpretacao do bloqueio de rede como restricao de ambiente e a decisao
+    de como lidar (mock + documentacao) em vez de "consertar" algo que ja
+    estava correto.
+  - Aceite final do que e "bom o suficiente" para o prazo.
+
+IMPORTANCIA DA VALIDACAO E DOS TESTES:
+  - Foi a execucao real ("./mvnw clean verify" + curl) que separou "codigo que
+    parece funcionar" de "codigo que funciona". Os testes automatizados
+    capturaram regressoes e provaram propriedades de seguranca (k-anonymity),
+    e a execucao manual confirmou o comportamento ponta a ponta.
+
+O QUE FARIA DIFERENTE NA PROXIMA EXPERIENCIA:
+  - Adotar o ciclo "pequenos incrementos + compilar/testar a cada passo" desde
+    o inicio, em vez de gerar grandes blocos e validar so no fim.
+  - Escrever alguns testes ANTES do codigo (TDD) para guiar a IA com criterios
+    de aceite objetivos.
+  - Definir cedo as restricoes de ambiente (rede, portas) para evitar
+    diagnosticos tardios.
+
+========================================================================
+FIM DO RELATO
+========================================================================
