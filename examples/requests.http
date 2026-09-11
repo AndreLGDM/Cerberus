@@ -1,0 +1,41 @@
+### Cerberus — coleção de requisições (IntelliJ HTTP Client / VS Code REST Client)
+### Serviço rodando em http://localhost:8080
+
+### Análise de força — senha fraca
+POST http://localhost:8080/api/v1/password/strength
+Content-Type: application/json
+
+{ "password": "password" }
+
+### Análise de força — senha forte
+POST http://localhost:8080/api/v1/password/strength
+Content-Type: application/json
+
+{ "password": "9xQ!vTm2#Lp8zR" }
+
+### Verificação de vazamento (k-anonymity)
+POST http://localhost:8080/api/v1/password/breach
+Content-Type: application/json
+
+{ "password": "password" }
+
+### Auditoria completa contra a política
+POST http://localhost:8080/api/v1/password/policy
+Content-Type: application/json
+
+{ "password": "Zx9q!Lm3#Tp7wRk2vBn8" }
+
+### Gerar hash BCrypt
+POST http://localhost:8080/api/v1/hash/bcrypt
+Content-Type: application/json
+
+{ "password": "MinhaSenh@1" }
+
+### Verificar senha vs. hash (substitua o hash pelo gerado acima)
+POST http://localhost:8080/api/v1/hash/verify
+Content-Type: application/json
+
+{ "password": "MinhaSenh@1", "hash": "$2a$12$COLOQUE_O_HASH_AQUI" }
+
+### Health check
+GET http://localhost:8080/actuator/health
